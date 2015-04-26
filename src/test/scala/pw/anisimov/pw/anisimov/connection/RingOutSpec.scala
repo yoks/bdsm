@@ -25,13 +25,10 @@ with BeforeAndAfterAll with BeforeAndAfter with ImplicitSender {
       fsm.stateName should be (DialingTo)
       expectMsg(PhoneCall(self))
       fsm ! Accepted
-      expectMsg(Accepted)
 
       fsm.stateName should be (Active)
       fsm ! Hang
 
-      // Each party receive Hang
-      expectMsg(Hang)
       expectMsg(Hang)
 
       expectTerminated(fsm)
@@ -46,7 +43,7 @@ with BeforeAndAfterAll with BeforeAndAfter with ImplicitSender {
       fsm.stateName should be (DialingTo)
       expectMsg(PhoneCall(self))
       fsm ! Busy
-      expectMsg(Busy)
+      expectMsg(Hang)
 
       expectTerminated(fsm)
     }

@@ -28,7 +28,6 @@ with BeforeAndAfterAll with BeforeAndAfter with ImplicitSender {
 
       // Each party receive Hang
       expectMsg(Hang)
-      expectMsg(Hang)
 
       expectTerminated(fsm)
     }

@@ -40,17 +40,15 @@ class RingOut(from: ActorRef, to: ActorRef) extends FSM[State, Data] {
 
   when(DialingTo, stateTimeout = 1 second) {
     case Event(StateTimeout | Busy, _) =>
-      from ! Busy
+      from ! Hang
       stop()
     case Event(Accepted, _) =>
-      from ! Accepted
       goto(Active)
   }
 
   when(Active) {
     case Event(Hang, _) =>
-      from ! Hang
-      to ! Hang
+      if (from == sender()) to ! Hang else from ! Hang
       stop()
   }
 

@@ -1,13 +1,12 @@
 package pw.anisimov
 
-import akka.actor.{ActorSystem, Props}
-import akka.routing.FromConfig
+import akka.actor.ActorSystem
 import com.typesafe.config.ConfigFactory
 
 object ApplicationMain extends App {
   val system = ActorSystem("bdsm")
 
-  system.actorOf(FromConfig.getInstance().props(Props.empty), "phonebook")
+  val phonebook  = system.actorOf(Phonebook.props(), "phonebook")
 
   system.actorOf(TelephonyServer.props(), "telephonyServer")
 
@@ -15,7 +14,8 @@ object ApplicationMain extends App {
 
   for (number <- 2500000 until 2500000 + agentsNum) {
     val phoneNumber  = "1650" + number
-    system.actorOf(AgentFSM.props(phoneNumber), phoneNumber)
+    val ref = system.actorOf(AgentFSM.props(phoneNumber), phoneNumber)
+    phonebook ! ref
   }
 
   println(s"$agentsNum agents created.")

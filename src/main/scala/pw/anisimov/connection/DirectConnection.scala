@@ -37,8 +37,7 @@ class DirectConnection(from: ActorRef, to: ActorRef) extends FSM[State, Data] {
 
   when(Active) {
     case Event(Hang, _) =>
-      from ! Hang
-      to ! Hang
+      if (from == sender()) to ! Hang else from ! Hang
       stop()
   }
 

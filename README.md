@@ -1,4 +1,4 @@
-activator-akka-scala-seed
+Bi Directional State Messaging
 =========================
 
-A minimal seed template for an Akka with Scala build 
+Build
