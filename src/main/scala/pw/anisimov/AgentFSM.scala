@@ -41,19 +41,57 @@ class AgentFSM(phoneNumber: String) extends FSM[State, Data] {
 
   startWith(Idle, Empty)
 
-  when(Idle, stateTimeout = 100 millis)(FSM.NullFunction)
-  when(Preparing, stateTimeout = 1 second)(FSM.NullFunction)
-  when(Dialing)(FSM.NullFunction)
-  when(Talking, stateTimeout = talkTime millis)(FSM.NullFunction)
+  when(Idle, stateTimeout = 100 millis){
+      case Event(PhoneCall(from), _) =>
+        goto(Talking) replying Accepted using CurrentCall(sender())
+      case Event(StateTimeout, _) =>
+        phonebook.tell(Identity, self)
+        goto(Preparing)
+  }
+  when(Preparing, stateTimeout = 1 second){
+      case Event(PhoneCall(from), _) =>
+        goto(Talking) replying Accepted using CurrentCall(sender())
+      case Event(StateTimeout, _) =>
+        goto(Idle)
+      case Event(AgentIdentity(from), _) =>
+        if(random.nextBoolean()) {
+           telephonyServer.tell(context.actorOf(DirectConnection.props(self, sender())), self)
+           goto(Dialing)
+        } else {
+           telephonyServer.tell(context.actorOf(RingOut.props(self, sender())), self)
+           goto(Idle)
+        }
+  }
+  when(Dialing){
+      case Event(Busy, _) =>
+          goto(Idle)
+      case Event(Accepted, _) =>
+          goto(Talking) using CurrentCall(sender())
+      case Event(PhoneCall(from), _) =>
+        stay() replying Busy
+      
+  }
+  when(Talking, stateTimeout = talkTime millis){
+      case Event(Hang, _) =>
+        goto(Idle) using Empty
+      case Event(StateTimeout, CurrentCall(connection)) =>
+        connection ! Hang
+        goto(Idle) using Empty
+      case Event(PhoneCall(from), _) =>
+        stay() replying Busy
+  }
 
   whenUnhandled {
+    case Event(Identity,_) =>
+       stay() replying AgentIdentity(phoneNumber)
+    
     case Event(s, d) =>
       log.warning("Unhandled AgentFSM Event({}, {}) in State {}", s, d, stateName)
       stay()
   }
 
   onTransition {
-    case x -> y => log.info(s"Agent $phoneNumber goes into $y State, with Data - [$stateData]")
+    case x -> y => log.info(s"Agent $phoneNumber goes into $y State")
   }
 
   initialize()
