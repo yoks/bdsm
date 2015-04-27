@@ -19,3 +19,5 @@ javaOptions in run ++= Seq("-javaagent:./lib/aspectjweaver-1.8.5.jar")
 enablePlugins(JavaAppPackaging)
 
 fork in run := true
+
+fork in run := true
